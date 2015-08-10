@@ -1,6 +1,6 @@
 # Introduction
 
-This R package is a wrapper around PFIM. The PFIM software is a widely-used tool for optimal design and is made available as a collection of R scripts (not an R-package). While the authors do provide ample documentation and examples, the software lacks an easy-to-use interface in R, and requires the user to create and adapt several custom script to evaluate an optimal design. This package attempts to make this easier by providing a structured set of functions that in turn create the required PFIM scripts and their input. 
+This R package is a wrapper around PFIM. The [PFIM](http://www.pfim.biostat.fr/) software (developed at Université Paris Diderot - INSERM) is a widely-used tool for optimal design and is made available as a collection of R scripts (not an R-package). While the authors do provide ample documentation and examples, the software lacks an easy-to-use interface in R, and requires the user to create and adapt several custom script to evaluate optimal designs. This package attempts to make this easier by providing a structured set of functions that in turn create the required PFIM scripts and their input, and thus allows for an easier workflow. 
 
 ## To be added soon:
 In addition, `PFIMwrap` also makes it easier to use models defined by ordinary differential equations, by providing a link with the `PKPDsim` package which allows much faster numerical integration than `deSolve`. PFRIMwrap also provides some additional plotting features, using `ggplot` instead of the base plotting library.
@@ -34,7 +34,7 @@ Run PFIM:
 
 ** More elaborate examples will follow soon. **
 
-# license
+# License
 
 MIT open source license.
 
