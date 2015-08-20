@@ -6,5 +6,6 @@ Date: 2015-08-09
 Author: Ron Keizer
 Maintainer: Ron Keizer <ronkeizer@gmail.com>
 Description: A wrapper around PFIM 4.0
+Depends: stringr
 License: MIT
 LazyData: TRUE

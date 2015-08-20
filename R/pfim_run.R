@@ -7,12 +7,15 @@
 pfim_run <- function(ini = list()) {
   out <- list()
   if(file.exists(ini$PFIM)) {
-    source(ini$PFIM)
-    if(file.exists(paste0(ini$folder, "/", ini$stdin))) {
-      PFIM(ini$stdin)
-    } else {
-      stop("Sorry, stdin script not found, please redefine your settings.")
-    }
+    e <- new.env()
+    evalq({
+      source(ini$PFIM)
+      if(file.exists(paste0(ini$folder, "/", ini$stdin))) {
+        PFIM(ini$stdin)
+      } else {
+        stop("Sorry, stdin script not found, please redefine your settings.")
+      }
+    }, envir = e)
   } else {
     stop("Sorry, PFIM main script not found, please redefine your settings.")
   }
