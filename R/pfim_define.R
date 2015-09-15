@@ -14,7 +14,7 @@ pfim_define <- function (
       template_file <- paste0(system.file(package="PFIMwrap"), "/PFIM", version, "/stdin.R")
     }
     if(!file.exists(template_file)) {
-      print(template_file)
+      # print(template_file)
       stop("Sorry, template file does not exist.")
     }
     templ <-readLines(template_file)
@@ -41,9 +41,9 @@ pfim_define <- function (
       fim_temp <- tempfile(pattern = "fim_", tmpdir = "", fileext = ".txt")
       file.copy(paste0(getwd(), "/", prevFIM), paste0(temp_folder, "/", fim_temp))
       args$previous.FIM <- fim_temp
-      print(prevFIM)
-      print(temp_folder)
-      print(fim_temp)
+#       print(prevFIM)
+#       print(temp_folder)
+#       print(fim_temp)
     }
 
     ## write specified arguments to R data object
@@ -58,14 +58,14 @@ pfim_define <- function (
     }
 
     ## write new temp stdin.R
-    writeLines(templ, paste0(temp_folder,"/", out_file))
+    writeLines(templ, paste0(temp_folder, "/", out_file))
 
     # write model
     if(is.null(model)) {
       model_file <- paste0(system.file(package="PFIMwrap"), "/PFIM", version, "/model.R")
     } else {
-      model_file <- "model.R"
-      #    model_file <- model
+      # model_file <- "model.R"
+      model_file <- model
     }
     if(file.exists(model_file)) {
       suppressWarnings(
@@ -74,23 +74,32 @@ pfim_define <- function (
     } else {
       stop("Can't find model file, please specify the full path of an R script with the model function.")
     }
-    writeLines(model_tmp, paste0(temp_folder, "/", model_file))
+    writeLines(model_tmp, paste0(temp_folder, "/model.R"))
 
     # create new PFIM.R
     PFIM_file <- tempfile(pattern = "PFIM_", tmpdir = temp_folder, fileext = ".R")
     PFIM_tmp <- readLines(paste0(system.file(package="PFIMwrap"), "/PFIM", version, "/PFIM.R"))
-    rm_line <- !is.na(stringr::str_match(PFIM_tmp, "^rm"))
-    if(sum(rm_line)>0) {
-      PFIM_tmp[rm_line] <- "## line removed by PFIMwrap"
-    }
+    PFIM_tmp <- str_replace_all(PFIM_tmp, "rm\\(list=ls\\(all=TRUE\\)\\)", "# line removed by PFIMwrap")
+    PFIM_tmp <- str_replace_all(PFIM_tmp, "out\\(\\)", "x <- out() # removed by PFIMwrap\n")
+    PFIM_tmp <- str_replace_all(PFIM_tmp, "out.fedorov", "x <- out.fedorov")
+    PFIM_tmp[length(PFIM_tmp)] <- "  return(x)\n}"
     dir1 <- !is.na(stringr::str_match(PFIM_tmp, "directory<-"))
     dir2 <- !is.na(stringr::str_match(PFIM_tmp, "directory.program<-"))
     PFIM_tmp[dir1] <- paste0("directory         <- '", temp_folder, "'")
     PFIM_tmp[dir2] <- paste0("directory.program <- '", paste0(system.file(package="PFIMwrap"), "/PFIM", version, "/Program"), "'")
+    PFIM_tmp <- c( # rewrite plot function, save to global variable
+"assign('plots_pfim', list(), envir = globalenv())
+ plot <- function(x, y, xlab, ylab, ...) {
+   title <- paste(str_replace_all(xlab, '[ \\\\/]', ''), str_replace_all(ylab, '[ \\\\/]', ''), sep='_')
+  plots_pfim[[title]] <<- list(x=x, y=y, xlab=xlab, ylab=ylab)
+ }
+ points <- function(...) {
+   # dummy
+ }\n", PFIM_tmp)
     writeLines(PFIM_tmp, PFIM_file)
     return(list(folder = temp_folder,
                 stdin = out_file,
-                model = model_file,
+                model = "model.R",
                 PFIM  = PFIM_file,
                 args  = args))
   }
