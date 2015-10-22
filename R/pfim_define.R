@@ -1,20 +1,24 @@
 #' Define settings for PFIM run
 #' @param args arguments to be set for PFIM. The argument names correspond to the object names in that you would normally set in stdin.R.
 #' @param tempate_file optional template filename for PFIM settings to override defaults
+#' @param ... passed to model function
 #' @export
 pfim_define <- function (
   args = list(),
   model = NULL,
+  folder = NULL,
   template_file = NULL,
   out_file = NULL,
-  version = "4.0") {
+  version = "4.0",
+  parameters = NULL,
+  regimen = NULL,
+  ...) {
 
     ## read stdin.R
     if(is.null(template_file)) {
       template_file <- paste0(system.file(package="PFIMwrap"), "/PFIM", version, "/stdin.R")
     }
     if(!file.exists(template_file)) {
-      # print(template_file)
       stop("Sorry, template file does not exist.")
     }
     templ <-readLines(template_file)
@@ -25,7 +29,41 @@ pfim_define <- function (
       message(paste("Allowed arguments are:", paste(args_allowed, collapse=", ")))
       stop()
     }
-    temp_folder <- tempdir()
+    if(!is.null(folder) && file.exists(folder)) {
+      temp_folder <- folder
+    } else {
+      temp_folder <- tempdir()
+      message(paste0("Creating temporary folder ", temp_folder))
+    }
+
+    # write model
+    if(is.null(model)) {
+      message("No model specified, using default model!")
+      model_file <- paste0(system.file(package="PFIMwrap"), "/PFIM", version, "/model.R")
+    } else {
+      if(class(model) == "character" && file.exists(model)) {
+        model_file <- model
+        if(file.exists(model_file)) {
+          suppressWarnings(
+            model_tmp <- readLines(model_file)
+          )
+        } else {
+          stop("Can't find model file, please specify the full path of an R script with the model function.")
+        }
+        writeLines(model_tmp, paste0(temp_folder, "/model.R"))
+      } else {# assume PKPDsim
+        if(class(model) == "function") {
+          parameters_pkpdsim <- parameters
+          regimen_pkpdsim <- regimen
+          save(list = c("model", "parameters_pkpdsim", "regimen_pkpdsim"), file=paste0(temp_folder, "/model.Robj"))
+          model_file <- "model_pkpdsim.R"
+          file.copy(paste0(system.file(package = "PFIMwrap"), "/model_pkpdsim.R"), paste0(temp_folder, "/model.R"))
+        } else {
+          stop("Model file not found")
+        }
+      }
+    }
+
 
     ## check if previous FIM specified. If so, copy file
     prevFIM <- NULL
@@ -60,22 +98,6 @@ pfim_define <- function (
     ## write new temp stdin.R
     writeLines(templ, paste0(temp_folder, "/", out_file))
 
-    # write model
-    if(is.null(model)) {
-      model_file <- paste0(system.file(package="PFIMwrap"), "/PFIM", version, "/model.R")
-    } else {
-      # model_file <- "model.R"
-      model_file <- model
-    }
-    if(file.exists(model_file)) {
-      suppressWarnings(
-        model_tmp <- readLines(model_file)
-      )
-    } else {
-      stop("Can't find model file, please specify the full path of an R script with the model function.")
-    }
-    writeLines(model_tmp, paste0(temp_folder, "/model.R"))
-
     # create new PFIM.R
     PFIM_file <- tempfile(pattern = "PFIM_", tmpdir = temp_folder, fileext = ".R")
     PFIM_tmp <- readLines(paste0(system.file(package="PFIMwrap"), "/PFIM", version, "/PFIM.R"))
@@ -99,7 +121,7 @@ pfim_define <- function (
     writeLines(PFIM_tmp, PFIM_file)
     return(list(folder = temp_folder,
                 stdin = out_file,
-                model = "model.R",
+                model = model_file,
                 PFIM  = PFIM_file,
                 args  = args))
   }
