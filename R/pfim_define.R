@@ -16,7 +16,7 @@ pfim_define <- function (
 
     ## read stdin.R
     if(is.null(template_file)) {
-      template_file <- paste0(system.file(package="PFIMwrap"), "/PFIM", version, "/stdin.R")
+      template_file <- paste0(system.file(package="PFIMwrap"), "/config_template.R")
     }
     if(!file.exists(template_file)) {
       stop("Sorry, template file does not exist.")
@@ -67,7 +67,7 @@ pfim_define <- function (
 
     ## check if previous FIM specified. If so, copy file
     prevFIM <- NULL
-    if("previous.FIM" %in% args) {
+    if("previous.FIM" %in% names(args)) {
       prevFIM <- args$previous.FIM
     } else {
       sel <- !is.na(str_match(templ, "previous.FIM"))
@@ -76,12 +76,14 @@ pfim_define <- function (
       }
     }
     if(!is.null(prevFIM)) {
-      fim_temp <- tempfile(pattern = "fim_", tmpdir = "", fileext = ".txt")
-      file.copy(paste0(getwd(), "/", prevFIM), paste0(temp_folder, "/", fim_temp))
-      args$previous.FIM <- fim_temp
-#       print(prevFIM)
-#       print(temp_folder)
-#       print(fim_temp)
+      print(prevFIM)
+      if(!file.exists(prevFIM)) {
+        stop("Previous FIM file not found!")
+      } else {
+        fim_temp <- tempfile(pattern = "fim_", tmpdir = "", fileext = ".txt")
+        file.copy(paste0(getwd(), "/", prevFIM), paste0(temp_folder, "/", fim_temp))
+        args$previous.FIM <- fim_temp
+      }
     }
 
     ## write specified arguments to R data object
