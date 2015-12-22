@@ -76,7 +76,6 @@ pfim_define <- function (
       }
     }
     if(!is.null(prevFIM)) {
-      print(prevFIM)
       if(!file.exists(prevFIM)) {
         stop("Previous FIM file not found!")
       } else {
